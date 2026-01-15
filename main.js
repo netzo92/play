@@ -219,6 +219,40 @@ async function joinGame(id, name) {
             await multiplayer.connect(game.getLocalPlayerState());
             multiplayer.startPositionBroadcast(() => game.getLocalPlayerState(), 50);
 
+            // Handle combat events from local game
+            game.onPlayerDash = () => {
+                if (multiplayer) multiplayer.dash();
+            };
+
+            game.onPlayerHit = (targetId, damage) => {
+                if (multiplayer) multiplayer.hit(targetId, damage);
+                // Also update local visual immediately
+                game.handleHit(targetId, damage);
+            };
+
+            // Handle combat events from remote players
+            multiplayer.onRemoteDash = (clientId) => {
+                const p = game.players.get(clientId);
+                if (p) {
+                    p.isDashing = true;
+                    p.dashTimer = 0.2;
+                }
+            };
+
+            multiplayer.onRemoteHit = (data) => {
+                // If I am the target, I take damage
+                if (data.targetId === game.localPlayer.id) {
+                    game.localPlayer.hp = Math.max(0, game.localPlayer.hp - data.damage);
+                    if (game.localPlayer.hp <= 0) {
+                        game.localPlayer.isAlive = false;
+                        alert('💀 You have been eliminated!');
+                    }
+                } else {
+                    // Otherwise, someone else hit someone else
+                    game.handleHit(data.targetId, data.damage);
+                }
+            };
+
             // Handle coin collection broadcast
             game.onCoinCollected = (coinId) => multiplayer.collectCoin(coinId);
 
@@ -265,12 +299,28 @@ function updateLeaderboard() {
 
 function endTournament() {
     game.tournamentActive = false;
-    const players = [...game.players.values()].sort((a, b) => b.score - a.score);
-    const winner = players[0];
+    const players = [...game.players.values()];
 
-    alert(`🏆 Tournament Over!\nWinner: ${winner.name} with ${winner.score} coins!`);
+    // Winner is the one with highest score OR last survivor
+    const alivePlayers = players.filter(p => p.isAlive);
+    const winner = alivePlayers.length === 1 ? alivePlayers[0] : players.sort((a, b) => b.score - a.score)[0];
 
-    // Reset
+    if (winner) {
+        alert(`🏆 Tournament Over!\nWinner: ${winner.name}!\n${isDemoMode ? 'Demo Prize: Virtual Glory' : 'Prize Pool: ' + game.prizePool.toFixed(1) + ' SOL'}`);
+
+        if (!isDemoMode && winner.id === game.localPlayer.id) {
+            console.log('%c💰 CLAIM YOUR REWARD: Visit the smart contract to claim ' + game.prizePool.toFixed(1) + ' SOL', 'color: #4ade80; font-weight: bold;');
+        }
+    }
+
+    // Reset players for next round
+    players.forEach(p => {
+        p.hp = 100;
+        p.isAlive = true;
+        p.score = 0;
+    });
+
+    // UI Reset
     game.timer = 0;
     game.coins = [];
     tournamentHUD.classList.add('hidden');
