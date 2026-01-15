@@ -39,14 +39,38 @@
             </div>
         </div>
 
-        <!-- Wallet Modal -->
-        <div class="name-modal" id="nameModal">
+        <!-- Mode Selection Modal -->
+        <div class="name-modal" id="modeModal">
             <div class="modal-content">
+                <h2>🌍 Choose Your Mode</h2>
+                <p>Select how you want to enter the world</p>
+
+                <div class="mode-options">
+                    <div class="mode-card" id="paidModeBtn">
+                        <div class="mode-icon">🏦</div>
+                        <h3>Paid Online</h3>
+                        <p>Requires Wallet. Win real SOL rewards.</p>
+                        <span class="mode-tag">Recommended</span>
+                    </div>
+
+                    <div class="mode-card" id="demoModeBtn">
+                        <div class="mode-icon">🎮</div>
+                        <h3>Demo Mode</h3>
+                        <p>Free to play. No wallet required.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Modal (shown after choosing Paid) -->
+        <div class="name-modal hidden" id="nameModal">
+            <div class="modal-content">
+                <button id="backToModeBtn" class="back-link">&larr; Back</button>
                 <h2>Welcome, Web3 Traveler!</h2>
                 <p>Connect your Solana wallet to join the world</p>
                 <div id="walletStatus" class="wallet-status"></div>
                 <button id="joinBtn">Connect Wallet</button>
-                <p class="small-hint">Supports Phantom, Solflare, and other injected wallets</p>
+                <p class="small-hint">Supports Phantom, Solflare, and others</p>
             </div>
         </div>
 

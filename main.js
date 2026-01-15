@@ -57,6 +57,34 @@ async function connectWallet() {
     }
 }
 
+// Mode Selection Elements
+const modeModal = document.getElementById('modeModal');
+const paidModeBtn = document.getElementById('paidModeBtn');
+const demoModeBtn = document.getElementById('demoModeBtn');
+const backToModeBtn = document.getElementById('backToModeBtn');
+
+let isDemoMode = false;
+
+// Mode Handlers
+demoModeBtn.addEventListener('click', () => {
+    isDemoMode = true;
+    modeModal.classList.add('hidden');
+    const guestId = 'guest_' + Math.random().toString(36).substr(2, 6);
+    const guestName = 'Guest_' + guestId.split('_')[1];
+    joinGame(guestId, guestName);
+});
+
+paidModeBtn.addEventListener('click', () => {
+    isDemoMode = false;
+    modeModal.classList.add('hidden');
+    nameModal.classList.remove('hidden');
+});
+
+backToModeBtn.addEventListener('click', () => {
+    nameModal.classList.add('hidden');
+    modeModal.classList.remove('hidden');
+});
+
 const tournamentModal = document.getElementById('tournamentModal');
 const tournamentTimer = document.getElementById('tournamentTimer');
 const tournamentHUD = document.getElementById('tournamentHUD');
@@ -72,6 +100,15 @@ let treasuryAddress = 'ENvbgE1i87X6uT6vG59P2U1NpkcM3cM7h98v9pP1qN77'; // Example
 
 async function joinTournament() {
     try {
+        if (isDemoMode) {
+            // Simulated free entry for Demo
+            tournamentActive = true;
+            game.tournamentActive = true;
+            tournamentModal.classList.add('hidden');
+            tournamentHUD.classList.remove('hidden');
+            return;
+        }
+
         if (!window.solana) return;
 
         startTournamentBtn.disabled = true;

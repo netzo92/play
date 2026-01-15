@@ -82,6 +82,16 @@ class Multiplayer {
             if (this.onCoinRemoved) this.onCoinRemoved(msg.data);
         });
 
+        this.tournamentChannel.subscribe('dash', (msg) => {
+            if (msg.clientId !== this.clientId && this.onRemoteDash) {
+                this.onRemoteDash(msg.clientId);
+            }
+        });
+
+        this.tournamentChannel.subscribe('hit', (msg) => {
+            if (this.onRemoteHit) this.onRemoteHit(msg.data); // { targetId, damage }
+        });
+
         this.updatePlayerCount();
     }
 
@@ -95,6 +105,14 @@ class Multiplayer {
 
     collectCoin(coinId) {
         if (this.connected) this.tournamentChannel.publish('coin_collected', coinId);
+    }
+
+    dash() {
+        if (this.connected) this.tournamentChannel.publish('dash', {});
+    }
+
+    hit(targetId, damage) {
+        if (this.connected) this.tournamentChannel.publish('hit', { targetId, damage });
     }
 
     updatePlayerCount() {
