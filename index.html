@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple MMO</title>
+    <meta name="description" content="A simple HTML5 multiplayer online game">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>🌍 Solana MMO</h1>
+            <div class="header-info">
+                <div class="tournament-timer" id="tournamentTimer">Rounds start soon!</div>
+                <div class="player-count">
+                    <span class="dot"></span>
+                    <span id="playerCount">1</span> online
+                </div>
+            </div>
+        </header>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- Tournament HUD -->
+            <div id="tournamentHUD" class="tournament-hud hidden">
+                <div class="prize-pool">🏆 <span id="prizePool">0.0</span> SOL</div>
+                <div class="leaderboard" id="leaderboard">
+                    <!-- Leaderboard entries will be injected here -->
+                </div>
+            </div>
+
+            <div class="controls-hint">
+                Use <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> to move &bull; <kbd>G</kbd> for Grid
+            </div>
+        </div>
+
+        <!-- Wallet Modal -->
+        <div class="name-modal" id="nameModal">
+            <div class="modal-content">
+                <h2>Welcome, Web3 Traveler!</h2>
+                <p>Connect your Solana wallet to join the world</p>
+                <div id="walletStatus" class="wallet-status"></div>
+                <button id="joinBtn">Connect Wallet</button>
+                <p class="small-hint">Supports Phantom, Solflare, and other injected wallets</p>
+            </div>
+        </div>
+
+        <!-- Tournament Modal -->
+        <div class="name-modal hidden" id="tournamentModal">
+            <div class="modal-content">
+                <h2>🏆 Join Tournament!</h2>
+                <p>Enter the 2-minute coin collection race.</p>
+                <div class="fee-info">Entry Fee: <strong>0.1 SOL</strong></div>
+                <p class="small-hint">Winner takes the pool (minus 5% fee)</p>
+                <div id="tournamentStatus" class="wallet-status"></div>
+                <button id="startTournamentBtn">Pay 0.1 SOL & Join</button>
+                <button id="skipTournamentBtn" class="secondary-btn">Maybe later</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script src="game.js"></script>
+    <script src="multiplayer.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
