@@ -2,23 +2,26 @@
  * Main - Initializes game and handles Solana Wallet Auth
  */
 
-// ⚠️ IMPORTANT: Replace this with your Ably API key from https://ably.com
-// Sign up for free - 6 million messages/month included!
-const ABLY_API_KEY = 'YOUR_ABLY_API_KEY_HERE';
+// ⚠️ ABLY_API_KEY is now loaded from environment variables via Netlify Functions
+let ABLY_API_KEY = null;
 
-// DOM Elements
-const nameModal = document.getElementById('nameModal');
-const joinBtn = document.getElementById('joinBtn');
-const playerCountEl = document.getElementById('playerCount');
-const walletStatus = document.getElementById('walletStatus');
-
-// Initialize game
-const game = new Game('gameCanvas');
-let multiplayer = null;
+async function fetchAblyKey() {
+    try {
+        const response = await fetch('/.netlify/functions/get-ably-key');
+        const data = await response.json();
+        if (data.key) {
+            ABLY_API_KEY = data.key;
+            return true;
+        }
+    } catch (err) {
+        console.error('Failed to fetch Ably key:', err);
+    }
+    return false;
+}
 
 // Check if Ably key is configured
 function isAblyConfigured() {
-    return ABLY_API_KEY && ABLY_API_KEY !== 'YOUR_ABLY_API_KEY_HERE';
+    return ABLY_API_KEY !== null;
 }
 
 function truncateAddress(address) {
@@ -184,6 +187,8 @@ async function joinGame(id, name) {
     }, 2000);
 
     // Connect to multiplayer
+    await fetchAblyKey();
+
     if (isAblyConfigured()) {
         try {
             multiplayer = new Multiplayer(ABLY_API_KEY);
