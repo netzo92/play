@@ -38,7 +38,10 @@ class Player {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
         ctx.fillStyle = this.color;
+        ctx.shadowBlur = isLocal ? 15 : 5;
+        ctx.shadowColor = this.color;
         ctx.fill();
+        ctx.shadowBlur = 0;
 
         // Outline
         ctx.strokeStyle = isLocal ? '#fff' : 'rgba(255,255,255,0.5)';
@@ -287,12 +290,12 @@ class Game {
         this.ctx.translate(-this.cameraX, -this.cameraY);
 
         // Clear canvas
-        this.ctx.fillStyle = '#2d5a3d';
+        this.ctx.fillStyle = '#1e293b'; // Dark slate ground
         this.ctx.fillRect(0, 0, this.width, this.height);
 
         // Draw ground pattern
-        this.ctx.fillStyle = 'rgba(0,0,0,0.05)';
-        const gridSize = 100;
+        this.ctx.fillStyle = 'rgba(255,255,255,0.02)';
+        const gridSize = 120;
         for (let x = 0; x < this.width; x += gridSize) {
             for (let y = 0; y < this.height; y += gridSize) {
                 if ((x + y) / gridSize % 2 < 1) this.ctx.fillRect(x, y, gridSize, gridSize);
@@ -302,19 +305,22 @@ class Game {
         // Draw Coins
         if (this.tournamentActive) {
             for (const coin of this.coins) {
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = '#fca311';
                 this.ctx.fillStyle = '#fca311';
                 this.ctx.beginPath();
                 this.ctx.arc(coin.x, coin.y, 8, 0, Math.PI * 2);
                 this.ctx.fill();
+                this.ctx.shadowBlur = 0;
                 this.ctx.strokeStyle = '#fff';
                 this.ctx.lineWidth = 2;
                 this.ctx.stroke();
                 // Inner "$"
                 this.ctx.fillStyle = '#fff';
-                this.ctx.font = 'bold 8px Inter';
-                this.ctx.textAlign = 'center'; // Ensure text is centered
-                this.ctx.textBaseline = 'middle'; // Ensure text is vertically centered
-                this.ctx.fillText('$', coin.x, coin.y + 1); // Adjusted Y for better visual centering
+                this.ctx.font = 'bold 9px Inter';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText('$', coin.x, coin.y + 1);
             }
         }
 
