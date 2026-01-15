@@ -10,10 +10,14 @@ class Player {
         this.y = y;
         this.targetX = x;
         this.targetY = y;
-        this.score = 0; // Tournament score
+        this.score = 0;
+        this.hp = 100;
+        this.isAlive = true;
+        this.isDashing = false;
+        this.dashTimer = 0;
         this.color = color;
         this.size = 24;
-        this.speed = 200; // pixels per second
+        this.speed = 200;
     }
 
     // Smooth interpolation for remote players
@@ -76,11 +80,30 @@ class Player {
         ctx.fillStyle = isLocal ? '#a5b4fc' : '#fff';
         ctx.fillText(this.name, this.x, tagY);
 
-        // Score display (if any)
+        // Score display
         if (this.score > 0) {
             ctx.fillStyle = '#fca311';
             ctx.font = 'bold 10px Inter';
             ctx.fillText(`⭐ ${this.score}`, this.x, tagY - 18);
+        }
+
+        // Health Bar
+        if (this.isAlive) {
+            const barWidth = 40;
+            const barHeight = 4;
+            const barY = tagY - (this.score > 0 ? 32 : 24);
+
+            // Background
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(this.x - barWidth / 2, barY, barWidth, barHeight);
+
+            // Health
+            const healthWidth = (this.hp / 100) * barWidth;
+            ctx.fillStyle = this.hp > 30 ? '#4ade80' : '#ef4444';
+            ctx.fillRect(this.x - barWidth / 2, barY, healthWidth, barHeight);
+        } else {
+            // Dead state visual
+            ctx.globalAlpha = 0.3;
         }
     }
 }
@@ -137,9 +160,12 @@ class Game {
 
     setupInput() {
         window.addEventListener('keydown', (e) => {
-            if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+            if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
                 e.preventDefault();
                 this.keys[e.code] = true;
+
+                // Dash trigger (Space)
+                if (e.code === 'Space') this.triggerDash();
             }
             if (e.code === 'KeyG') this.showGrid = !this.showGrid;
         });
@@ -193,7 +219,15 @@ class Game {
     }
 
     update(dt) {
-        if (!this.localPlayer) return;
+        if (!this.localPlayer || !this.localPlayer.isAlive) return;
+
+        // Handle Dash
+        if (this.localPlayer.isDashing) {
+            this.localPlayer.dashTimer -= dt;
+            if (this.localPlayer.dashTimer <= 0) {
+                this.localPlayer.isDashing = false;
+            }
+        }
 
         // Handle local player movement
         let dx = 0, dy = 0;
@@ -204,17 +238,25 @@ class Game {
 
         if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
 
-        const speed = this.localPlayer.speed * dt;
-        this.localPlayer.x += dx * speed;
-        this.localPlayer.y += dy * speed;
+        let currentSpeed = this.localPlayer.speed;
+        if (this.localPlayer.isDashing) currentSpeed *= 3; // Dash multiplier
+
+        const speedStep = currentSpeed * dt;
+        this.localPlayer.x += dx * speedStep;
+        this.localPlayer.y += dy * speedStep;
 
         // World Boundary collision
         const margin = this.localPlayer.size;
         this.localPlayer.x = Math.max(margin, Math.min(this.width - margin, this.localPlayer.x));
         this.localPlayer.y = Math.max(margin, Math.min(this.height - margin, this.localPlayer.y));
 
+        // Combat Collisions
+        if (this.localPlayer.isDashing && this.tournamentActive) {
+            this.checkCombatCollisions();
+        }
+
         // Coin collection
-        if (this.tournamentActive) {
+        if (this.tournamentActive && this.localPlayer.isAlive) {
             for (let i = this.coins.length - 1; i >= 0; i--) {
                 const coin = this.coins[i];
                 const dist = Math.hypot(this.localPlayer.x - coin.x, this.localPlayer.y - coin.y);
@@ -335,6 +377,38 @@ class Game {
         this.running = false;
     }
 
+    triggerDash() {
+        if (!this.localPlayer || !this.localPlayer.isAlive) return;
+        if (this.localPlayer.isDashing) return;
+
+        this.localPlayer.isDashing = true;
+        this.localPlayer.dashTimer = 0.2; // Dash duration
+
+        if (this.onPlayerDash) this.onPlayerDash();
+    }
+
+    checkCombatCollisions() {
+        for (const [id, player] of this.players) {
+            if (id === this.localPlayer.id || !player.isAlive) continue;
+
+            const dist = Math.hypot(this.localPlayer.x - player.x, this.localPlayer.y - player.y);
+            if (dist < 30) {
+                // Hit detected!
+                if (this.onPlayerHit) this.onPlayerHit(id, 20); // 20 damage
+            }
+        }
+    }
+
+    handleHit(targetId, damage) {
+        const player = this.players.get(targetId);
+        if (player) {
+            player.hp = Math.max(0, player.hp - damage);
+            if (player.hp <= 0) {
+                player.isAlive = false;
+            }
+        }
+    }
+
     getLocalPlayerState() {
         if (!this.localPlayer) return null;
         return {
@@ -343,7 +417,10 @@ class Game {
             x: this.localPlayer.x,
             y: this.localPlayer.y,
             color: this.localPlayer.color,
-            score: this.localPlayer.score
+            score: this.localPlayer.score,
+            hp: this.localPlayer.hp,
+            isAlive: this.localPlayer.isAlive,
+            isDashing: this.localPlayer.isDashing
         };
     }
 }
